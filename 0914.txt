@@ -20,3 +20,9 @@ systemctl status <서비스명>
 로그 확인 (기동 위치 기준, 보통 실행 디렉터리의 로그 파일이나 nohup.out)
 ls -l /proc/$(pgrep -f CertVerifyServer)/cwd
 이 명령으로 실행 디렉터리를 찾은 뒤 그 안의 로그 파일을 tail -f로 보시면 됩니다.
+
+=============================================
+
+ "BOM 처리"(724b9a5)에서 손댄 
+_conf/config.sample.test.inc.ph
+_lib/fl_cm_disclosure.func.php
