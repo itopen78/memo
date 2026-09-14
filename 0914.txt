@@ -1,0 +1,22 @@
+프로세스 확인
+ps -ef | grep CertVerifyServer | grep -v grep
+java -Dfile.encoding=UTF-8 -cp out:lib/* CertVerifyServer 줄이 나오면 떠 있는 것입니다. 안 나오면 Java 전체를 확인하세요.
+ps -ef | grep java | grep -v grep
+
+포트 확인 (8290 LISTEN 여부)
+ss -ltnp | grep 8290
+ss가 없으면 netstat -ltnp | grep 8290을 쓰시면 됩니다. LISTEN 줄 끝에 java PID가 같이 보입니다.
+
+응답 확인
+curl -v -m 5 http://localhost:8290/
+WAS와 다른 서버에 떠 있다면 WAS 서버에서 설정된 주소로 확인하세요.
+curl -v -m 5 http://172.18.20.110:8290/
+Connection refused면 프로세스 미기동, 타임아웃이면 방화벽이나 네트워크 문제입니다.
+
+서비스로 등록돼 있다면
+systemctl list-units --type=service | grep -i cert
+systemctl status <서비스명>
+
+로그 확인 (기동 위치 기준, 보통 실행 디렉터리의 로그 파일이나 nohup.out)
+ls -l /proc/$(pgrep -f CertVerifyServer)/cwd
+이 명령으로 실행 디렉터리를 찾은 뒤 그 안의 로그 파일을 tail -f로 보시면 됩니다.
