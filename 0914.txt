@@ -26,3 +26,41 @@ ls -l /proc/$(pgrep -f CertVerifyServer)/cwd
  "BOM 처리"(724b9a5)에서 손댄 
 _conf/config.sample.test.inc.ph
 _lib/fl_cm_disclosure.func.php
+
+
+=================================================
+***  리눅스 환경에서 testdir.crosscert.com (testdir.crosscert.com) 포트 389 ,한국전자인증 TESTCA 로 tcp 통신이 되는지 확인
+
+1. DNS 확인
+
+getent hosts testdir.crosscert.com
+
+2. TCP 389 접속 확인 (가장 간단)
+
+nc -zv -w 5 testdir.crosscert.com 389
+
+성공이면 succeeded! 또는 open, 실패면 Connection timed out / refused 가 나옵니다. nc 가 없으면 sudo apt install netcat-openbsd.
+
+3. nc 없이 bash 내장 기능으로
+
+timeout 5 bash -c '</dev/tcp/testdir.crosscert.com/389' && echo OPEN || echo BLOCKED
+
+4. 실제 LDAP 응답까지 확인 (선택)
+
+sudo apt install -y ldap-utils
+ldapsearch -x -H ldap://testdir.crosscert.com:389 -b "" -s base -l 5
+
+TCP만 열린 게 아니라 LDAP 서버가 응답하는지까지 봅니다. Can't contact LDAP server 면 차단입니다.
+
+5. 관련 호스트 한꺼번에 점검
+
+인증서 발급(CMP)은 testca.crosscert.com:4502, 운영 디렉터리는 dir.crosscert.com:389 를 씁니다.
+
+for h in testdir.crosscert.com:389 dir.crosscert.com:389 testca.crosscert.com:4502; do
+  timeout 5 bash -c "</dev/tcp/${h%:*}/${h#*:}" && echo "$h OPEN" || echo "$h BLOCKED"
+done
+
+참고
+
+- 검증서버가 도커로 떠 있다면 호스트에서 열려도 컨테이너 안에서 다시 확인해야 합니다. docker exec crosscert bash -c 'timeout 5 bash -c "</dev/tcp/testdir.crosscert.com/389" && echo OPEN || echo BLOCKED'
+- 서버에 프록시 환경변수(http_proxy 등)가 있어도 LDAP은 프록시를 타지 않으므로 방화벽 아웃바운드 389 허용이 필요합니다.
