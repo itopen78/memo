@@ -64,3 +64,20 @@ done
 
 - 검증서버가 도커로 떠 있다면 호스트에서 열려도 컨테이너 안에서 다시 확인해야 합니다. docker exec crosscert bash -c 'timeout 5 bash -c "</dev/tcp/testdir.crosscert.com/389" && echo OPEN || echo BLOCKED'
 - 서버에 프록시 환경변수(http_proxy 등)가 있어도 LDAP은 프록시를 타지 않으므로 방화벽 아웃바운드 389 허용이 필요합니다.
+
+
+
+==========================
+
+[root@ncto1flapp01 nginx]# tail -f  /applog/web/nginx/error.log
+#9 {main}
+  thrown in /app/ncsrc/filing/_lib/db.func.php on line 132" while reading upstream, client: 10.1.12.254, server: filing-ap.test.nxg.kr, request: "GET /?m1=filing&m2=notice_request_adhoc HTTP/1.1", upstream: "fastcgi://unix:/var/run/php/php-fpm.sock:", host: "filing-ap.test.nxg.kr:19000", referrer: "https://filing.test.nexchange.co.kr/?m1=filing&m2=notice_register_periodic"
+2026/09/14 16:46:47 [error] 205356#205356: *7408 FastCGI sent in stderr: "PHP message: PHP Fatal error:  Uncaught mysqli_sql_exception: Table 'filing.tb_fl_isfr_usr_ident_log' doesn't exist in /app/ncsrc/filing/_lib/db.func.php:132
+Stack trace:
+#0 /app/ncsrc/filing/_lib/db.func.php(132): mysqli->query()
+#1 /app/ncsrc/filing/_lib/db.func.php(119): db_query_ext()
+#2 /app/ncsrc/filing/extmod/checkplus/ident.func.php(214): db_query()
+#3 /app/ncsrc/filing/auth/mobile_auth.php(361): ident_log()
+#4 {main}
+  thrown in /app/ncsrc/filing/_lib/db.func.php on line 132" while reading response header from upstream, client: 10.1.12.254, server: filing-ap.test.nxg.kr, request: "POST /auth/mobile_auth.php HTTP/1.1", upstream: "fastcgi://unix:/var/run/php/php-fpm.sock:", host: "filing-ap.test.nxg.kr:19000", referrer: "https://filing.test.nexchange.co.kr/auth/mobile_auth.php?ctx=usr_request"
+
