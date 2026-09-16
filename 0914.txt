@@ -1,3 +1,58 @@
+====================================
+
+온프레미스 서버에서는 php-fpm 프로세스와 확장 로드 여부를 이렇게 확인합니다.
+
+1. php-fpm 프로세스 확인
+
+ps -ef | grep '[p]hp-fpm'
+systemctl status php-fpm      # 배포판에 따라 php8.x-fpm, php-fpm82 등
+
+master 1개와 worker 여러 개가 보이면 살아 있는 것입니다.
+
+2. qslp 확장 로드 확인 (CLI)
+
+php -m | grep -i qslp
+php -r 'var_dump(extension_loaded("qslp"));'
+php --ri qslp
+php -r 'print_r(get_extension_funcs("qslp"));'
+
+qslp가 출력되고 bool(true)면 로드된 것입니다.
+
+3. php-fpm 프로세스에 실제로 올라갔는지 확인
+
+CLI와 php-fpm이 다른 php.ini를 읽을 수 있어서, 실제 웹 프로세스의 메모리 맵을 봅니다.
+
+# php-fpm 프로세스 중 qslp.so 를 매핑한 것이 있는지
+for p in $(pgrep php-fpm); do grep -l qslp.so /proc/$p/maps 2>/dev/null; done
+
+# 또는 lsof
+lsof -p $(pgrep -o php-fpm) | grep qslp
+
+php-fpm PID 목록이 찍히면 워커에 확장이 올라간 것입니다. 아무것도 안 나오면 php-fpm이 읽는 ini에 등록이 안 됐거나 재시작 전입니다.
+
+4. 안 나올 때 점검할 것
+
+# php-fpm이 읽는 ini 위치와 등록 여부
+php-fpm -i 2>/dev/null | grep -i 'loaded configuration\|additional .ini'
+grep -rn 'qslp' /etc/php* 2>/dev/null
+
+# 확장 파일이 확장 디렉터리에 있는지
+ls -l "$(php-config --extension-dir)/qslp.so"
+
+# 확장 로드 실패 로그
+grep -i qslp /var/log/php-fpm/*.log /var/log/php*/*.log 2>/dev/null | tail
+
+ini에 extension = qslp를 추가한 뒤에는 php-fpm 재시작이 필요합니다(systemctl restart php-fpm).
+
+5. 동작까지 확인하려면
+
+앱 코드가 배포된 경로에서 왕복 회귀 스크립트를 돌립니다.
+
+php {앱루트}/extmod/keypad/_test/aton_qslp_roundtrip.php
+
+
+====================================
+
 프로세스 확인
 ps -ef | grep CertVerifyServer | grep -v grep
 java -Dfile.encoding=UTF-8 -cp out:lib/* CertVerifyServer 줄이 나오면 떠 있는 것입니다. 안 나오면 Java 전체를 확인하세요.
